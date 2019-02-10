@@ -10,7 +10,7 @@ internal class VbTrackTest {
         val midiFile = VbMidiFile("", "", file.inputStream())
 
 
-        val vbTrack = VbTrack(0, midiFile.midiFile.tracks[1])
+        val vbTrack = VbTrack(0, midiFile.midiFile.tracks[1], TickInMs(0, 0, emptyList()))
 
         println(midiFile.midiFile.tracks[1].eventCount)
 

@@ -60,13 +60,13 @@ test {
 }
 
 dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     compile("com.vaadin:vaadin-spring-boot-starter")
     testCompile("org.springframework.boot:spring-boot-starter-test")
     implementation 'com.github.vlecomte:android-midi-lib:1.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.1.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
-
+    implementation 'com.jayway.jsonpath:json-path:2.4.0'
 }
