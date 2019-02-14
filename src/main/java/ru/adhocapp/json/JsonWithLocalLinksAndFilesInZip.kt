@@ -20,11 +20,11 @@ class JsonWithLocalLinksAndFilesInZip(private val fileName: String, private val 
 
             for (i in 0 until lesCount) {
                 val photoLinkWithBase64 = changeBase64PhotoToLink(json, i)
-                photoLinkWithBase64.addToDirectory(tempDirectory, "photo")
+                photoLinkWithBase64.addToDirectory(tempDirectory)
                 val exCount = json.read<Int>("$.lessons[$i].exercises.length()")
                 for (j in 0 until exCount) {
                     val midiLinkWithBase64 = changeBase64MidiToLink(json, i, j)
-                    midiLinkWithBase64.addToDirectory(tempDirectory, "midi")
+                    midiLinkWithBase64.addToDirectory(tempDirectory)
                 }
             }
             println(json.jsonString().take(1000))
@@ -47,8 +47,8 @@ class JsonWithLocalLinksAndFilesInZip(private val fileName: String, private val 
         val jayPathBase64 = "$jayPath.midiBase64"
         val midiBase64Value = json.read<String>(jayPathBase64)
         json.delete(jayPathBase64)
-        json.put(jayPath, "midiLocalLink", "midi/$fileName")
-        return LinkWithBase64(fileName, midiBase64Value)
+        json.put(jayPath, "midiLocalLink", fileName)
+        return LinkWithBase64(fileName, cutStartTrashData(midiBase64Value))
     }
 
     private fun changeBase64PhotoToLink(json: DocumentContext, i: Int): LinkWithBase64 {
@@ -57,17 +57,26 @@ class JsonWithLocalLinksAndFilesInZip(private val fileName: String, private val 
         val jayPathBase64 = "$jayPath.photoBase64"
         val photoBase64Value = json.read<String>(jayPathBase64)
         json.delete(jayPathBase64)
-        json.put(jayPath, "photoLocalLink", "photo/$fileName")
-        return LinkWithBase64(fileName, photoBase64Value)
+        json.put(jayPath, "photoLocalLink", fileName)
+        return LinkWithBase64(fileName, cutStartTrashData(photoBase64Value))
     }
+}
 
-
+private fun cutStartTrashData(base64EncodedString: String): String {
+    var base64EncodedString = base64EncodedString
+    if (base64EncodedString.startsWith("data:audio/mid;base64,")) {
+        base64EncodedString = base64EncodedString.replace("data:audio/mid;base64,", "")
+    }
+    if (base64EncodedString.startsWith("data:;base64,")) {
+        base64EncodedString = base64EncodedString.replace("data:;base64,", "")
+    }
+    return base64EncodedString
 }
 
 data class LinkWithBase64(val fileName: String, val base64: String) {
-    fun addToDirectory(tempDirectory: Path, folder: String) {
-        val byteArray = Base64().decode(base64.toByteArray())
-        val file = File("$tempDirectory/$folder/$fileName")
+    fun addToDirectory(tempDirectory: Path) {
+        val byteArray = Base64.decodeBase64(base64.toByteArray())
+        val file = File("$tempDirectory/$fileName")
         file.parentFile.mkdirs()
         file.writeBytes(byteArray)
     }
