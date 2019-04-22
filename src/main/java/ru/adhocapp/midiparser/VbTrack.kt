@@ -9,7 +9,6 @@ import com.leff.midi.event.meta.Text
 import com.leff.midi.event.meta.TrackName
 import ru.adhocapp.midiparser.domain.NoteSign
 import ru.adhocapp.midiparser.domain.VbNote
-import java.lang.Exception
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -28,6 +27,7 @@ data class VbTrack(val id: Int, val track: MidiTrack, val tickInMs: TickInMs) {
     val range: Int
     val highNote: String
     val lowNote: String
+    val tempoBpm: Int
     var error: String? = ""
 
     var FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("mm:ss.SSS")
@@ -44,6 +44,7 @@ data class VbTrack(val id: Int, val track: MidiTrack, val tickInMs: TickInMs) {
         highNote = extractHighNote.fullName()
         lowNote = extractLowNote.fullName()
         range = Math.abs(extractHighNote.midi - extractLowNote.midi)
+        tempoBpm = tickInMs.firstTempoBpm()
     }
 
     private fun findErrors(notes: List<VbNote>) {

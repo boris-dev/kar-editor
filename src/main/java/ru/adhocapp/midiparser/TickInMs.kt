@@ -51,4 +51,8 @@ class TickInMs(private val resolution: Int, lengthInTicks: Long, tempoList: List
         return (60 * 1000 / (bpm * resolution) * amountOfTick).toInt()
     }
 
+    fun firstTempoBpm(): Int {
+        return tempoList.first().bpm.toInt()
+    }
+
 }

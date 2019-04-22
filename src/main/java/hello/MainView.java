@@ -1,6 +1,5 @@
 package hello;
 
-import com.leff.midi.MidiTrack;
 import com.leff.midi.event.meta.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -191,6 +190,7 @@ public class MainView extends VerticalLayout {
         trackGrid.addColumn("lowNote");
         trackGrid.addColumn("highNote");
         trackGrid.addColumn("range");
+        trackGrid.addColumn("tempoBpm");
         trackGrid.addColumn("error");
 
         trackGrid.getColumnByKey("name").setWidth("100px").setFlexGrow(0);
