@@ -12,7 +12,10 @@ import ru.adhocapp.midiparser.domain.NoteRange
 import ru.adhocapp.midiparser.domain.NoteSign
 import ru.adhocapp.midiparser.domain.VbNote
 import ru.adhocapp.midiparser.utils.MidiTextToWordsOnNotes
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -798,6 +801,8 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
         val tracks: List<MidiTrack> = getAllTracksByName("main")
         tracks.forEach { setNameToTrack(it, "not-main") }
         setNameToTrack(main.track, "main")
+        setGrandPianoToTrack(main.track)
+        setMaxVolume(main.track)
 
         var words = getTrackByName("words")
         if (words != null) {
@@ -810,6 +815,18 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
         words.insertEvent(trackName)
         main.notes.filter { it.note != NoteSign.UNDEFINED }.filter { it.text.isNotEmpty() }.forEach { words.insertEvent(Text(it.startTick, 0, it.text)) }
 
+    }
+
+    private fun setMaxVolume(track: MidiTrack) {
+        track.events.stream()
+                .filter { midiEvent -> midiEvent is NoteOn }
+                .forEach { (it as NoteOn).velocity = 120 }
+    }
+
+    private fun setGrandPianoToTrack(track: MidiTrack) {
+        track.events.stream()
+                .filter { midiEvent -> midiEvent is ProgramChange }
+                .forEach { (it as ProgramChange).programNumber = ProgramChange.MidiProgram.ACOUSTIC_GRAND_PIANO.programNumber() }
     }
 
     private fun setNameToTrack(midiTrack: MidiTrack, name: String) {
@@ -845,6 +862,7 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
     fun getFbTrackByName(trackName: String): VbTrack? {
         return tracks.find { it.name == trackName }
     }
+
 
 }
 

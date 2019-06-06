@@ -203,4 +203,11 @@ public enum NoteSign {
     public static NoteSign fromFullName(@NotNull String noteStr) {
         return Arrays.stream(values()).filter(n -> n.fullName().equals(noteStr)).findAny().orElse(NoteSign.UNDEFINED);
     }
-}
+
+    @NotNull
+    public static List<NoteSign> range(@NotNull NoteSign min, @NotNull NoteSign max) {
+        return getVbNotesByMidi().stream()
+                .filter(noteSign -> noteSign.midi >= min.midi)
+                .filter(noteSign -> noteSign.midi <= max.midi)
+                .collect(Collectors.toList());
+    }}

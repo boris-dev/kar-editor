@@ -2,10 +2,12 @@ package hello;
 
 import com.leff.midi.event.meta.Text;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -23,6 +25,7 @@ import com.vaadin.flow.server.StreamResource;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.adhocapp.midiparser.TextNoteGraph;
 import ru.adhocapp.midiparser.VbMidiFile;
 import ru.adhocapp.midiparser.VbTrack;
 import ru.adhocapp.midiparser.domain.NoteSign;
@@ -32,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @Route
+@StyleSheet("root.css")
 public class MainView extends VerticalLayout {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
@@ -71,9 +75,16 @@ public class MainView extends VerticalLayout {
                 }
             }
         });
+        TextArea noteTextArea = new TextArea();
+//        noteTextArea.setWidth("1000px");
+//        noteTextArea.getElement().getChildren().findFirst().get();
 
-
+        noteTextArea.getStyle().set("font-family", "Courier New");
+        noteTextArea.getStyle().set("white-space", "nowrap");
+//        noteTextArea.getStyle().set("white-space",  "pre-wrap");
+//        noteTextArea.getStyle().set("overflow-y",  "auto ! important");
         Button text = new Button("Karaoke text", VaadinIcon.CLIPBOARD_TEXT.create());
+        Button showNotes = new Button("Show notes", VaadinIcon.MUSIC.create());
 
         text.addClickListener(e -> {
             VbTrack track = trackGrid.getSelectedItems().iterator().next();
@@ -84,6 +95,13 @@ public class MainView extends VerticalLayout {
             Dialog dialog = new Dialog(textArea);
             dialog.setHeight("800px");
             dialog.open();
+        });
+
+        showNotes.addClickListener(e -> {
+            if (midiFile != null) {
+                VbTrack vbTrack = trackGrid.getSelectedItems().iterator().next();
+                noteTextArea.setValue(new TextNoteGraph(vbTrack.getNotes()).text());//.replaceAll("\n", "<br>")
+            }
         });
 
         this.buffer = new MemoryBuffer();
@@ -98,7 +116,8 @@ public class MainView extends VerticalLayout {
         downloadAnchor = new Anchor();
 
         textArea = new TextArea();
-        textArea.setHeight("600px");
+
+//        textArea.setHeight("600px");
         textArea.addValueChangeListener(e -> {
             Iterator<VbTrack> iterator = trackGrid.getSelectedItems().iterator();
             if (iterator.hasNext()) {
@@ -110,23 +129,27 @@ public class MainView extends VerticalLayout {
             }
         });
 
-        HorizontalLayout actions = new HorizontalLayout(upload, generateDownloadLink, transponateValue, transponate, text);
+        HorizontalLayout actions = new HorizontalLayout(upload, generateDownloadLink, transponateValue, transponate, text, showNotes);
         SplitLayout layout1 = new SplitLayout(
                 trackGrid,
                 noteGrid);
         trackGrid.setHeight("600px");
         noteGrid.setHeight("600px");
         layout1.setSplitterPosition(33);
-        layout1.setHeight("600px");
         SplitLayout layout2 = new SplitLayout(
                 layout1, textArea
         );
         layout2.setWidth(getWidth());
         layout2.setSplitterPosition(90);
 
-        layout2.setHeight("600px");
 
-        add(actions, downloadAnchor, layout2);
+        SplitLayout layout = new SplitLayout(layout2, noteTextArea);
+        layout.setOrientation(SplitLayout.Orientation.VERTICAL);
+        layout.setWidth(getWidth());
+        layout.setHeight(("700px"));
+        layout.setSplitterPosition(80);
+
+        add(actions, downloadAnchor, layout);
 
         initTrackGrid();
 
