@@ -7,7 +7,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -28,9 +27,11 @@ import org.slf4j.LoggerFactory;
 import ru.adhocapp.midiparser.TextNoteGraph;
 import ru.adhocapp.midiparser.VbMidiFile;
 import ru.adhocapp.midiparser.VbTrack;
+import ru.adhocapp.midiparser.WorkSongCounter;
 import ru.adhocapp.midiparser.domain.NoteSign;
 import ru.adhocapp.midiparser.domain.VbNote;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 
@@ -163,11 +164,15 @@ public class MainView extends VerticalLayout {
         generateDownloadLink.addClickListener(e -> {
             try {
                 midiFile.saveTextTrack(trackGrid.getSelectedItems().iterator().next());
+
                 String fileName = midiFile.getFileName();
                 fileName = FilenameUtils.removeExtension(fileName);
                 fileName += ".kar";
+                fileName = WorkSongCounter.get() + "_" + fileName;
+                String finalFileName = fileName;
                 StreamResource resource = new StreamResource(fileName,
-                        () -> midiFile.inputStream());
+                        () -> midiFile.inputStream(finalFileName));
+
                 resource.setCacheTime(-1);
                 resource.setContentType(midiFile.getMimeType());
 
@@ -186,6 +191,13 @@ public class MainView extends VerticalLayout {
             }
         });
 
+    }
+
+    private File createTempFolder() {
+        File recent = new File("recent");
+        recent.mkdirs();
+        recent.mkdir();
+        return recent;
     }
 
     private void initTrackGrid() {

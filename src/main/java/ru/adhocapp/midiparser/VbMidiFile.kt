@@ -6,7 +6,9 @@ import com.leff.midi.event.*
 import com.leff.midi.event.meta.Tempo
 import com.leff.midi.event.meta.Text
 import com.leff.midi.event.meta.TrackName
+import hello.Application
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 import ru.adhocapp.midiparser.domain.MlSongResultRow
 import ru.adhocapp.midiparser.domain.NoteRange
 import ru.adhocapp.midiparser.domain.NoteSign
@@ -30,6 +32,7 @@ import kotlin.streams.toList
  */
 
 class VbMidiFile(val fileName: String, val mimeType: String, inputStream: InputStream) {
+    private val logger = LoggerFactory.getLogger(Application::class.java)
     private var toneDifferenceFromOriginTone: Int = 0
     private var diffFromOriginTempoPercent: Float = 0.toFloat()
     val DRUM_INSTRUMENT_CODE_START_INDEX = 112
@@ -790,10 +793,13 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
                 .toList()
     }
 
-    fun inputStream(): InputStream {
-        val tempFile = File.createTempFile(fileName, ".mid")
+    fun inputStream(fileName: String): InputStream {
+        File("recent").mkdir()
+
+        val tempFile = File.createTempFile(fileName, "", File("recent"))
         tempFile.deleteOnExit()
         midiFile.writeToFile(tempFile)
+        logger.info("FILE: " + tempFile.absolutePath)
         return tempFile.inputStream()
     }
 
@@ -803,6 +809,7 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
         setNameToTrack(main.track, "main")
         setGrandPianoToTrack(main.track)
         setMaxVolume(main.track)
+        correctNoteOnNoteOffMistakes()
 
         var words = getTrackByName("words")
         if (words != null) {
@@ -817,9 +824,37 @@ $trackName: ${midiTrack.eventCount} | $instruments | channel: ${trackChannel(mid
 
     }
 
+
+    fun correctNoteOnNoteOffMistakes() {
+        for (current in midiFile.tracks) {
+            val sortedBy = current.events
+                    .sortedBy { midiEvent -> getSortScore(midiEvent) }
+                    .map { noteOff2noteOn(it) }
+            current.events.clear()
+            sortedBy.forEach { current.insertEvent(it) }
+        }
+    }
+
+    private fun noteOff2noteOn(event: MidiEvent): MidiEvent {
+        return if (event is NoteOff) {
+            NoteOn(event.tick, event.delta, event.channel, event.noteValue, 0)
+        } else {
+            event
+        }
+    }
+
+    private fun getSortScore(midiEvent: MidiEvent): Int {
+        return if (midiEvent is NoteOff) {
+            midiEvent.tick.toInt() * 2 - 1
+        } else {
+            midiEvent.tick.toInt() * 2
+        }
+    }
+
     private fun setMaxVolume(track: MidiTrack) {
         track.events.stream()
-                .filter { midiEvent -> midiEvent is NoteOn }
+                .filter { it is NoteOn }
+                .filter { (it as NoteOn).velocity > 0 }
                 .forEach { (it as NoteOn).velocity = 120 }
     }
 

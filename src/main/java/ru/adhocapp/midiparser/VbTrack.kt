@@ -184,8 +184,7 @@ data class VbTrack(val id: Int, val track: MidiTrack, val tickInMs: TickInMs) {
         for (text in texts) {
             val find = notes.find { it.startTick == text.tick }
             if (find == null) {
-                notes.add(
-                        VbNote(LocalDateTime.ofInstant(Instant.ofEpochMilli(tickInMs.msByTick(text.tick)), ZoneId.systemDefault()).format(FORMATTER), text))
+                notes.add(VbNote(LocalDateTime.ofInstant(Instant.ofEpochMilli(tickInMs.msByTick(text.tick)), ZoneId.systemDefault()).format(FORMATTER), text))
             } else {
                 find.text = text.text
             }
